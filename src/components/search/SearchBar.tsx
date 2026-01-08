@@ -5,18 +5,19 @@ import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
+import SearchResults from "./SearchResults";
 
-export default function SearchBox()
+import type Book from "@/types/book";
+
+
+export default function SearchBar()
 {
     const navigate = useNavigate();
 
     const [searchParams] = useSearchParams();
-
     const [query, setQuery] = useState("");
-
     const [showSearchResults, setShowSearchResults] = useState(false);
-
-    const [searchResults, setSearchResults] = useState([]);
+    const [searchResults, setSearchResults] = useState<Book[]>([]);
 
 
     async function search()
@@ -27,13 +28,8 @@ export default function SearchBox()
 
         const data = await response.json();
 
-        console.log(data);
+        // console.log(data);
         setSearchResults(data.docs || []);
-    }
-
-    function syncURLParams()
-    {
-        setQuery(searchParams.get("q") || "")
     }
 
     function debounce()
@@ -61,7 +57,11 @@ export default function SearchBox()
     }
 
     useEffect(debounce, [query]);
-    useEffect(syncURLParams, [searchParams])
+
+    useEffect(() => {
+        setShowSearchResults(false);
+        setQuery(searchParams.get("q") || "");
+    }, [searchParams])
 
 
     return (
@@ -80,31 +80,8 @@ export default function SearchBox()
                     className="!w-full border border-gray-300 rounded px-4 py-2"
                 />
 
-                {showSearchResults && searchResults.length > 0 && (
-                    <div
-                        className="absolute top-full left-0 right-0 mt-1 bg-white border rounded shadow-lg z-50"
-                        onMouseDown={(e) => e.preventDefault()}
-                    >
-                        {searchResults.map((book) => (
-                            <div key={book.key} className="flex gap-3 p-4 hover:bg-gray-100 cursor-pointer">
-                                {book.cover_i && (
-                                    <img
-                                        src={`https://covers.openlibrary.org/b/id/${book.cover_i}-S.jpg`}
-                                        alt={book.title}
-                                        className="w-12 h-16 object-cover"
-                                    />
-                                )}
-                                <div className="font-semibold">{book.title}</div>
-
-                                <div className="text-gray-600">
-                                    {book.author_name?.[0] || "Unknown Author"}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {showSearchResults && (<SearchResults items={searchResults} />)}
             </form>
-
         </>
     );
 }
